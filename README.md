@@ -69,9 +69,9 @@ let parameters = urlFormat.parse(url)
 print(flatten(parameters)) // ("apple", "swift", 2)
 ```
 
-This patter will match URL with path like `/users/apple/repos/?filter=swift&page=1` (first and last `/` are optional). The fully qualified type of `urlFormat` in this case would be  `ClosedQueryFormat<((String, String), Int)>`  (most of the time using base class type `URLFormat` is sufficient). The type of generic parameter describes types of all captured parameters. To extract them from the actual URL you'd use `parse` method and one of `flatten` functions to "flatten" nested tuples, i.e. `((A, B), C) -> (A, B, C)` which makes it more convenient to access parameters.
+This patter will match URL with path like `/users/apple/repos/?filter=swift&page=1` (first and last `/` are optional). The fully qualified type of `urlFormat` in this case would be  `ClosedQueryFormat<((String, String), Int)>` (most of the time using base class type `URLFormat` is sufficient). The type of generic parameter describes types of all captured parameters. To extract them from the actual URL you'd use `parse` method and one of `flatten` functions to "flatten" nested tuples, i.e. `((A, B), C) -> (A, B, C)` which makes it more convenient to access parameters.
 
-Note that it's not necessary to specify a generic type parameter manually as compiler can infer it from the declaration*. And compiler ensures that pattern and types of captured parameters are always in sync.
+Note that it's not necessary to specify a generic type parameter manually as compiler can infer it from the declaration<sup>[1](#footnote1)</sup>. And compiler ensures that pattern and types of captured parameters are always in sync.
 
 A nice caveat is that `URLFormat` can be used to print actual URLs and their readable templates if you provide it values for its parameters (again compiler makes sure that they are always in sync):
 
@@ -81,11 +81,15 @@ urlFormat.print(parameters) // "users/apple/repos?filter=swift&page=2"
 urlFormat.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
-Note that there are no string literals involved in declaring this URL*. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so expression like `.users` is converted to the parser that parses `"users"` string from the path components.
+Note that there are no string literals involved in declaring this URL<sup>[2](#footnote2)</sup>. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so expression like `.users` is converted to the parser that parses `"users"` string from the path components.
 
 Path parameters are parsed using `.string` and `.int` operators. Query parameters are parsed with a combination of these operators and dynamic member lookup, so `.filter(.string)` will parse a string query parameter named `"filter"`, `.page(.int)` will parse an integer query parameter named `"page"`.
 
 URLFormat also makes sure that URL is composed of path and query components correctly by allowing usage of `/`, `/?`, `&`, `*` and `*?` operators only in the correct places. This is done by using different subclasses of `URLFormat` to keep track of the builder state. It is similar to using phantom generic type parameters but allows to implement dynamic member lookup only for specific states of the builder.
+
+<a name="footnote1">1</a>: an exeption here is when pattern does not capture any parameters, i.e. `_ = URLFormat<Prelude.Unit> = /.helloworld` . `Prelude.Unit` here is a type, similar to `Void`, but unlike `Void` it is an actual empty struct type.
+
+<a name="footnote2">2</a>: `""` in the beginning of the patters is needed because static `dynamicMemberLookup` subscript calls can't be infered without explicitly specifying type (see [this discussion](https://forums.swift.org/t/static-dynamicmemberlookup/33310/5) for details)
 
 ## Parameters types
 
@@ -132,10 +136,6 @@ With that you can use your type as a path or a query parameter:
 `&` - concatenates two query components
 `*` - allows any trailing path components
 `*?` - concatenates path with any trailing path components and a query component
-
-* an exeption here is when pattern does not capture any parameters, i.e. `_ = URLFormat<Prelude.Unit> = /.helloworld` . `Prelude.Unit` here is a type, similar to `Void`, but unlike `Void` it is an actual empty struct type. 
-* `""` in the beginning of the patters is needed because static `dynamicMemberLookup` subscript calls can't be infered without explicitly specifying type (see [this discussion](https://forums.swift.org/t/static-dynamicmemberlookup/33310/5) for details)
-
 
 ## Installation
 
