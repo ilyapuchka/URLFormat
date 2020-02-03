@@ -2,50 +2,58 @@ import Foundation
 import Prelude
 import CommonParsers
 
-extension URLComponents: Monoid {
-    public static var empty: URLComponents = URLComponents()
+public struct URLRequestComponents: Monoid {
+    public let method: String?
+    public internal(set) var urlComponents: URLComponents
+    
+    public init(method: String? = nil, urlComponents: URLComponents = URLComponents()) {
+        self.urlComponents = urlComponents
+        self.method = method
+    }
+    
+    public static var empty: URLRequestComponents = URLRequestComponents()
 
     public var isEmpty: Bool {
-        return pathComponents.isEmpty && scheme == nil && host == nil
+        return pathComponents.isEmpty && urlComponents.scheme == nil && urlComponents.host == nil
     }
 
-    public static func <> (lhs: URLComponents, rhs: URLComponents) -> URLComponents {
+    public static func <> (lhs: URLRequestComponents, rhs: URLRequestComponents) -> URLRequestComponents {
         var result = URLComponents()
-        result.scheme = lhs.scheme ?? rhs.scheme
-        result.host = lhs.host ?? rhs.host
-        result.path = [lhs.path, rhs.path]
+        result.scheme = lhs.urlComponents.scheme ?? rhs.urlComponents.scheme
+        result.host = lhs.urlComponents.host ?? rhs.urlComponents.host
+        result.path = [lhs.urlComponents.path, rhs.urlComponents.path]
             .filter { !$0.isEmpty }
             .joined(separator: "/")
 
-        if lhs.host != nil && rhs.host == nil {
+        if lhs.urlComponents.host != nil && rhs.urlComponents.host == nil {
             result.path = "/" + result.path
         }
 
         result.queryItems =
-            lhs.queryItems.flatMap { lhs in
-                rhs.queryItems.flatMap { rhs in lhs + rhs }
+            lhs.urlComponents.queryItems.flatMap { lhs in
+                rhs.urlComponents.queryItems.flatMap { rhs in lhs + rhs }
                     ?? lhs
             }
-            ?? rhs.queryItems
-        return result
+            ?? rhs.urlComponents.queryItems
+        return .init(method: lhs.method, urlComponents: result)
     }
 
     public var pathComponents: [String] {
         get {
-            if path.isEmpty {
+            if urlComponents.path.isEmpty {
                 return []
-            } else if path.hasPrefix("/") {
-                return path.dropFirst().components(separatedBy: "/")
+            } else if urlComponents.path.hasPrefix("/") {
+                return urlComponents.path.dropFirst().components(separatedBy: "/")
             } else {
-                return path.components(separatedBy: "/")
+                return urlComponents.path.components(separatedBy: "/")
             }
         }
         set {
-            path = newValue.joined(separator: "/")
+            urlComponents.path = newValue.joined(separator: "/")
         }
     }
 
-    func with(_ f: (inout URLComponents) -> Void) -> URLComponents {
+    func with(_ f: (inout URLRequestComponents) -> Void) -> URLRequestComponents {
         var v = self
         f(&v)
         return v
@@ -53,21 +61,21 @@ extension URLComponents: Monoid {
 }
 
 public class URLFormat<A> {
-    let parser: Parser<URLComponents, A>
+    let parser: Parser<URLRequestComponents, A>
 
-    init(_ parser: Parser<URLComponents, A>) {
+    init(_ parser: Parser<URLRequestComponents, A>) {
         self.parser = parser
     }
     
-    public func parse(_ url: URLComponents) throws -> A? {
+    public func parse(_ url: URLRequestComponents) throws -> A? {
         fatalError()
     }
-    
-    public func print(_ value: A) throws -> URLComponents? {
+
+    public func print(_ value: A) throws -> URLRequestComponents? {
         try parser.print(value)
     }
-    
-    public func template(_ value: A) throws -> URLComponents? {
+
+    public func template(_ value: A) throws -> URLRequestComponents? {
         try parser.template(value)
     }
 }
@@ -78,12 +86,15 @@ public class OpenPathFormat<A>: URLFormat<A> {
     public subscript(dynamicMember member: String) -> ClosedPathFormat<A> {
         return ClosedPathFormat(parser <% path(member))
     }
+    public override func parse(_ url: URLRequestComponents) throws -> A? {
+        try self.end.parser.parse(url)?.match
+    }
 }
 
 // url does not have a query and is complete, not expeciting any path parameters
 // only query parameters can be added
 public class ClosedPathFormat<A>: URLFormat<A>, ExpressibleByStringLiteral {
-    public override init(_ parser: Parser<URLComponents, A>) {
+    public override init(_ parser: Parser<URLRequestComponents, A>) {
         super.init(parser)
     }
     required public convenience init(stringLiteral value: String) {
@@ -93,8 +104,7 @@ public class ClosedPathFormat<A>: URLFormat<A>, ExpressibleByStringLiteral {
             self.init(path(String(value)).map(.any))
         }
     }
-    
-    public override func parse(_ url: URLComponents) throws -> A? {
+    public override func parse(_ url: URLRequestComponents) throws -> A? {
         try self.end.parser.parse(url)?.match
     }
 }
@@ -113,12 +123,15 @@ public class OpenQueryFormat<A>: URLFormat<A> {
             return ClosedQueryFormat(parser %> query(member, iso))
         }
     }
+    public override func parse(_ url: URLRequestComponents) throws -> A? {
+        try parser.parse(url)?.match
+    }
 }
 
 // url has a query and is complete, not expecting any query parameters
 // no query parameters can be added
 public class ClosedQueryFormat<A>: URLFormat<A> {
-    public override func parse(_ url: URLComponents) throws -> A? {
+    public override func parse(_ url: URLRequestComponents) throws -> A? {
         try parser.parse(url)?.match
     }
 }
@@ -249,35 +262,46 @@ extension PartialIso where B: RawRepresentable, B.RawValue == A {
 public extension URLFormat {
     /// Matches url that has no additional path componets that were not parsed yet.
     var end: URLFormat {
-        return .init(self.parser <% Parser<URLComponents, Prelude.Unit>(
+        return .init(self.parser <% Parser<URLRequestComponents, Prelude.Unit>(
             parse: { $0.isEmpty ? ($0, unit) : nil },
-            print: const(URLComponents()),
-            template: const(URLComponents())
+            print: const(URLRequestComponents()),
+            template: const(URLRequestComponents())
         ))
     }
 }
 
-public func any() -> Parser<URLComponents, Prelude.Unit> {
+public func any() -> Parser<URLRequestComponents, Prelude.Unit> {
     return Parser(
         parse: { ($0, unit) },
-        print: const(URLComponents()),
-        template: const(URLComponents())
+        print: const(URLRequestComponents()),
+        template: const(URLRequestComponents())
     )
 }
 
-public func some() -> Parser<URLComponents, String> {
+public func some() -> Parser<URLRequestComponents, String> {
     return Parser(
         parse: { format in
             format.isEmpty
                 ? (format, "")
                 : (format.with { $0.pathComponents = [] }, format.pathComponents.joined(separator: "/"))
     },
-        print: { str in URLComponents().with { $0.path = str } },
-        template: { _ in URLComponents(string: "*") })
+        print: { str in URLRequestComponents().with { $0.urlComponents.path = str } },
+        template: { _ in URLRequestComponents(urlComponents: URLComponents(string: "*")!) })
 }
 
-public func path(_ str: String) -> Parser<URLComponents, Prelude.Unit> {
-    return Parser<URLComponents, Prelude.Unit>(
+public func httpMethod(_ method: String) -> Parser<URLRequestComponents, Prelude.Unit> {
+    return Parser<URLRequestComponents, Prelude.Unit>(
+        parse: { request in
+            guard request.method == method else { return nil }
+            return (request, unit)
+        },
+        print: const(URLRequestComponents(method: method)),
+        template: const(URLRequestComponents(method: method))
+    )
+}
+
+public func path(_ str: String) -> Parser<URLRequestComponents, Prelude.Unit> {
+    return Parser<URLRequestComponents, Prelude.Unit>(
         parse: { format in
             return head(format.pathComponents).flatMap { (p, ps) in
                 return p == str
@@ -285,34 +309,34 @@ public func path(_ str: String) -> Parser<URLComponents, Prelude.Unit> {
                     : nil
             }
     },
-        print: { _ in URLComponents().with { $0.path = str } },
-        template: { _ in URLComponents().with { $0.path = str } }
+        print: { _ in URLRequestComponents().with { $0.urlComponents.path = str } },
+        template: { _ in URLRequestComponents().with { $0.urlComponents.path = str } }
     )
 }
 
-public func path<A>(_ f: PartialIso<String, A>) -> Parser<URLComponents, A> {
-    return Parser<URLComponents, A>(
+public func path<A>(_ f: PartialIso<String, A>) -> Parser<URLRequestComponents, A> {
+    return Parser<URLRequestComponents, A>(
         parse: { format in
             guard let (p, ps) = head(format.pathComponents), let v = try f.apply(p) else { return nil }
             return (format.with { $0.pathComponents = ps }, v)
     },
         print: { a in
             try f.unapply(a).flatMap { s in
-                URLComponents().with { $0.path = s }
+                URLRequestComponents().with { $0.urlComponents.path = s }
             }
     },
         template: { a in
             try f.unapply(a).flatMap { s in
-                return URLComponents().with { $0.path = ":" + "\(type(of: a))" }
+                return URLRequestComponents().with { $0.urlComponents.path = ":" + "\(type(of: a))" }
             }
     })
 }
 
-public func query<A>(_ key: String, _ f: PartialIso<String, A>) -> Parser<URLComponents, A> {
-    return Parser<URLComponents, A>(
+public func query<A>(_ key: String, _ f: PartialIso<String, A>) -> Parser<URLRequestComponents, A> {
+    return Parser<URLRequestComponents, A>(
         parse: { format in
             guard
-                let queryItems = format.queryItems,
+                let queryItems = format.urlComponents.queryItems,
                 let p = queryItems.first(where: { $0.name == key })?.value,
                 let v = try f.apply(p)
                 else { return nil }
@@ -320,12 +344,12 @@ public func query<A>(_ key: String, _ f: PartialIso<String, A>) -> Parser<URLCom
     },
         print: { a in
             try f.unapply(a).flatMap { s in
-                URLComponents().with { $0.queryItems = [URLQueryItem(name: key, value: s)] }
+                URLRequestComponents().with { $0.urlComponents.queryItems = [URLQueryItem(name: key, value: s)] }
             }
     },
         template: { a in
             try f.unapply(a).flatMap { s in
-                URLComponents().with { $0.queryItems = [URLQueryItem(name: key, value: ":" + "\(type(of: a))")] }
+                URLRequestComponents().with { $0.urlComponents.queryItems = [URLQueryItem(name: key, value: ":" + "\(type(of: a))")] }
             }
     })
 }

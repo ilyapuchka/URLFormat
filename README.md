@@ -5,13 +5,13 @@ Type safe url pattern matching without regular expressions and argument type mis
 Example:
 
 ```swift
-let urlFormat: URLFormat = ""/.users/.string/.repos/?.filter(.string)&.page(.int)
+let format: URLFormat = ""/.users/.string/.repos/?.filter(.string)&.page(.int)
 let url = URLComponents(string: "/users/apple/repos/?filter=swift&page=2")!
-let parameters = urlFormat.parse(url)
+let parameters = try format.parse(url)
 
 _ = flatten(parameters) // ("apple", "swift", 2)
-urlFormat.print(parameters) // "users/apple/repos?filter=swift&page=2"
-urlFormat.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
+try format.print(parameters) // "users/apple/repos?filter=swift&page=2"
+try format.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
 ## Usage
