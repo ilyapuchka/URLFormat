@@ -1,6 +1,6 @@
 # URLFormat
 
-Type safe url patter matching without regular expressions and argument type mismatches based on parser combinators.
+Type safe url pattern matching without regular expressions and argument type mismatches based on parser combinators.
 
 Example:
 
@@ -10,8 +10,8 @@ let url = URLComponents(string: "/users/apple/repos/?filter=swift&page=2")!
 let parameters = urlFormat.parse(url)
 
 _ = flatten(parameters) // ("apple", "swift", 2)
-urlFormat.print(parameters) // "user/apple/repos?filter=swift&page=2"
-urlFormat.template(parameters) // "user/:String/repos?filter=:String&page=:Int"
+urlFormat.print(parameters) // "users/apple/repos?filter=swift&page=2"
+urlFormat.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
 ## Usage
