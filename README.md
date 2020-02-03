@@ -102,7 +102,7 @@ Following parameters types are supported:
 - `Bool` with `.bool` operator
 - `UUID` with `.uuid` operator
 - `Any` with `.any` operator (unlike `*` this will match only single path component, `*` will capture all trailing path components into one string)
-- `LosslessStringConvertible` types with `lossles(MyType.self)` operator
+- `LosslessStringConvertible` types with `lossless(MyType.self)` operator
 - `RawRepresentable` with `String`, `Character`, `Int` and `Double` raw value types with `raw(MyType.self)` operator
 
 You can add support for your own types by implementing `PartialIso<String, MyType>`:
