@@ -14,6 +14,12 @@ try format.print(parameters) // "users/apple/repos?filter=swift&page=2"
 try format.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
+This library is based on [CommonParsers](https://github.com/ilyapuchka/common-parsers) which provides a common foundation for parser combinators and is heavily inspired by [swift-parser-printer](https://github.com/pointfreeco/swift-parser-printer) from [pointfreeco](https://twitter.com/pointfreeco). If you want to learn more about [parser combinators](https://www.pointfree.co/episodes/ep62-parser-combinators-part-1) and application of functional concepts in every day iOS development check out their [blog](https://www.pointfree.co).
+
+URLFormat is used in [SwiftNIOMock](https://github.com/ilyapuchka/SwiftNIOMock) to implement URL router. Vapor extension will be published in the future (most likely as a separate repository).
+
+Also checkout [Interplate](https://github.com/ilyapuchka/Interplate) which provides a foundation for string templates using parser combinators and string interpolation together.
+
 ## Usage
 
 URLFormat is a URL builder that allows you to describe URL in a natural manner and allows you to pattern match it in a type safe way.
