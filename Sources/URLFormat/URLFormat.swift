@@ -2,11 +2,11 @@ import Foundation
 import Prelude
 import CommonParsers
 
-public struct URLRequestComponents: Monoid {
-    public let method: String?
+public struct URLRequestComponents: Monoid, CustomStringConvertible {
+    public let method: String
     public internal(set) var urlComponents: URLComponents
     
-    public init(method: String? = nil, urlComponents: URLComponents = URLComponents()) {
+    public init(method: String = "", urlComponents: URLComponents = URLComponents()) {
         self.urlComponents = urlComponents
         self.method = method
     }
@@ -58,6 +58,14 @@ public struct URLRequestComponents: Monoid {
         f(&v)
         return v
     }
+    
+    public var description: String {
+        if !method.isEmpty {
+            return "\(method) \(urlComponents)"
+        } else {
+            return "\(urlComponents)"
+        }
+    }
 }
 
 public class URLFormat<A> {
@@ -98,11 +106,7 @@ public class ClosedPathFormat<A>: URLFormat<A>, ExpressibleByStringLiteral {
         super.init(parser)
     }
     required public convenience init(stringLiteral value: String) {
-        if value.isEmpty {
-            self.init(any().map(.any))
-        } else {
-            self.init(path(String(value)).map(.any))
-        }
+        self.init(httpMethod(value).map(.any))
     }
     public override func parse(_ url: URLRequestComponents) throws -> A? {
         try self.end.parser.parse(url)?.match

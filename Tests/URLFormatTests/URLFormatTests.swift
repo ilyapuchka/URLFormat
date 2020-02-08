@@ -7,15 +7,15 @@ class SwiftNIOMockTests: XCTestCase {
     func testFormats() throws {
         var url: URLComponents
         
-        let f1 = ""/.user/.string/.repos/?.filter(.string)&.page(.int)
+        let f1 = "GET"/.user/.string/.repos/?.filter(.string)&.page(.int)
 
         url = URLComponents(string: "user/ilya/repos?filter=swift&page=2")!
-        var match = try XCTUnwrap(f1.parse(URLRequestComponents(urlComponents: url)))
+        var match = try XCTUnwrap(f1.parse(URLRequestComponents(method: "GET", urlComponents: url)))
         XCTAssertEqual("\(flatten(match))", #"("ilya", "swift", 2)"#)
         XCTAssertEqual(try f1.print(parenthesize("ilya", "swift", 2))?.urlComponents, url)
 
         url = URLComponents(string: "/user/ilya/repos?page=2&filter=swift")!
-        match = try XCTUnwrap(f1.parse(URLRequestComponents(urlComponents: url)))
+        match = try XCTUnwrap(f1.parse(URLRequestComponents(method: "GET", urlComponents: url)))
         XCTAssertEqual("\(flatten(match))", #"("ilya", "swift", 2)"#)
 
         let f2: URLFormat<Prelude.Unit> = ""/.helloworld
