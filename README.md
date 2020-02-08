@@ -7,7 +7,8 @@ Example:
 ```swift
 let format: URLFormat = ""/.users/.string/.repos/?.filter(.string)&.page(.int)
 let url = URLComponents(string: "/users/apple/repos/?filter=swift&page=2")!
-let parameters = try format.parse(url)
+let request = URLRequestComponents(urlComponents: url)
+let parameters = try format.parse(request)
 
 _ = flatten(parameters) // ("apple", "swift", 2)
 try format.print(parameters) // "users/apple/repos?filter=swift&page=2"
@@ -71,7 +72,8 @@ With URLFormat you would describe URLs as follows:
 ```swift
 let urlFormat: URLFormat = ""/.users/.string/.repos/?.filter(.string)&.page(.int)
 let url = URLComponents(string: "/users/apple/repos/?filter=swift&page=2")!
-let parameters = urlFormat.parse(url)
+let request = URLRequestComponents(urlComponents: url)
+let parameters = urlFormat.parse(request)
 print(flatten(parameters)) // ("apple", "swift", 2)
 ```
 
@@ -87,15 +89,25 @@ urlFormat.print(parameters) // "users/apple/repos?filter=swift&page=2"
 urlFormat.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
-Note that there are no string literals involved in declaring this URL<sup id="a2">[2](#f2)</sup>. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so expression like `.users` is converted to the parser that parses `"users"` string from the path components.
+Note that there are no string literals involved in declaring this URL except the first one. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so expression like `.users` is converted to the parser that parses `"users"` string from the path components.
+
+You can either leave the first string component empty<sup id="a2">[2](#f2)</sup> or use it to specify the HTTP method of the request if you use URLFormat with HTTP requests and not just URLs:
+
+```swift
+let urlFormat: URLFormat = "GET"/.users/.string/.repos/?.filter(.string)&.page(.int)
+let url = URLComponents(string: "/users/apple/repos/?filter=swift&page=2")!
+let request = URLRequestComponents(method: "GET", urlComponents: url)
+let parameters = urlFormat.parse(request)
+urlFormat.print(parameters) // "GET users/apple/repos?filter=swift&page=2"
+```
 
 Path parameters are parsed using `.string` and `.int` operators. Query parameters are parsed with a combination of these operators and dynamic member lookup, so `.filter(.string)` will parse a string query parameter named `"filter"`, `.page(.int)` will parse an integer query parameter named `"page"`.
 
 URLFormat also makes sure that URL is composed of path and query components correctly by allowing usage of `/`, `/?`, `&`, `*` and `*?` operators only in the correct places. This is done by using different subclasses of `URLFormat` to keep track of the builder state. It is similar to using phantom generic type parameters but allows to implement dynamic member lookup only for specific states of the builder.
 
-<a name="f1">1</a>: an exeption here is when pattern does not capture any parameters, i.e. `_ = URLFormat<Prelude.Unit> = /.helloworld` . `Prelude.Unit` here is a type, similar to `Void`, but unlike `Void` it is an actual empty struct type. [↩](#a1)
+<a name="f1">1</a>: an exeption here is when pattern does not capture any parameters, i.e. `_ = URLFormat<Prelude.Unit> = ""/.helloworld` . `Prelude.Unit` here is a type, similar to `Void`, but unlike `Void` it is an actual empty struct type. [↩](#a1)
 
-<a name="f2">2</a>: `""` in the beginning of the patters is needed because static `dynamicMemberLookup` subscript calls can't be infered without explicitly specifying type (see [this discussion](https://forums.swift.org/t/static-dynamicmemberlookup/33310/5) for details) [↩](#a2)
+<a name="f2">2</a>: String in the beginning of the pattern is needed because static `dynamicMemberLookup` subscript calls can't be infered without explicitly specifying type in the beginning of expression (see [this discussion](https://forums.swift.org/t/static-dynamicmemberlookup/33310/5) for details) [↩](#a2)
 
 ## Parameters types
 
