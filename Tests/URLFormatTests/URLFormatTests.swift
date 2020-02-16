@@ -2,7 +2,7 @@ import XCTest
 @testable import URLFormat
 import Prelude
 
-class SwiftNIOMockTests: XCTestCase {
+class URLFormatTests: XCTestCase {
     
     func testFormats() throws {
         var url: URLComponents
