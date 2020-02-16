@@ -83,8 +83,8 @@ public class URLFormat<A> {
         try parser.print(value)
     }
 
-    public func template(_ value: A) throws -> URLRequestComponents? {
-        try parser.template(value)
+    public func template() throws -> URLRequestComponents? {
+        try parser.templateValue().flatMap(parser.template)
     }
 }
 
@@ -117,27 +117,27 @@ public class ClosedPathFormat<A>: URLFormat<A>, ExpressibleByStringLiteral {
 // no path parameters can be added
 @dynamicMemberLookup
 public class OpenQueryFormat<A>: URLFormat<A> {
-    public subscript<B>(dynamicMember member: String) -> (PartialIso<String, B>) -> ClosedQueryFormat<(A, B)> {
+    public subscript<B>(dynamicMember member: String) -> (URLPartialIso<String, B>) -> ClosedQueryFormat<(A, B)> {
         return { [parser] iso in
             return ClosedQueryFormat(parser <%> query(member, iso))
         }
     }
-    public subscript<B>(dynamicMember member: String) -> (PartialIso<String, B>) -> ClosedQueryFormat<B> where A == Prelude.Unit {
+    public subscript<B>(dynamicMember member: String) -> (URLPartialIso<String, B>) -> ClosedQueryFormat<B> where A == Prelude.Unit {
         return { [parser] iso in
             return ClosedQueryFormat(parser %> query(member, iso))
         }
     }
-    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Int, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Int {
+    public subscript<B: RawRepresentable & CaseIterable>(dynamicMember member: String) -> (URLPartialIso<Int, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Int {
         return { [parser] iso in
             return ClosedQueryFormat(parser <%> query(member, .int >>> .raw(B.self)))
         }
     }
-    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Double, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Double {
+    public subscript<B: RawRepresentable & CaseIterable>(dynamicMember member: String) -> (URLPartialIso<Double, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Double {
         return { [parser] iso in
             return ClosedQueryFormat(parser <%> query(member, .double >>> .raw(B.self)))
         }
     }
-    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Character, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Character {
+    public subscript<B: RawRepresentable & CaseIterable>(dynamicMember member: String) -> (URLPartialIso<Character, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Character {
         return { [parser] iso in
             return ClosedQueryFormat(parser <%> query(member, .char >>> .raw(B.self)))
         }
@@ -210,19 +210,19 @@ extension OpenPathFormat {
     public var any: ClosedPathFormat<(A, Any)> {
         return ClosedPathFormat(parser <%> path(.any))
     }
-    public func lossless<B: LosslessStringConvertible>(_ type: B.Type) -> ClosedPathFormat<(A, B)> {
+    public func lossless<B: LosslessStringConvertible & CustomParserTemplateValueConvertible>(_ type: B.Type) -> ClosedPathFormat<(A, B)> {
         return ClosedPathFormat(parser <%> path(.losslessStringConvertible))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == String {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == String {
         return ClosedPathFormat(parser <%> path(.string).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Int {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Int {
         return ClosedPathFormat(parser <%> path(.int).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Double {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Double {
         return ClosedPathFormat(parser <%> path(.double).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Character {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Character {
         return ClosedPathFormat(parser <%> path(.char).map(.rawRepresentable))
     }
 }
@@ -249,32 +249,32 @@ extension OpenPathFormat where A == Prelude.Unit {
     public var any: ClosedPathFormat<Any> {
         return ClosedPathFormat(parser %> path(.any))
     }
-    public func lossless<B: LosslessStringConvertible>(_ type: B.Type) -> ClosedPathFormat<B> {
+    public func lossless<B: LosslessStringConvertible & CustomParserTemplateValueConvertible>(_ type: B.Type) -> ClosedPathFormat<B> {
         return ClosedPathFormat(parser %> path(.losslessStringConvertible))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == String {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == String {
         return ClosedPathFormat(parser %> path(.string).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Int {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Int {
         return ClosedPathFormat(parser %> path(.int).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Double {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Double {
         return ClosedPathFormat(parser %> path(.double).map(.rawRepresentable))
     }
-    public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Character {
+    public func raw<B: RawRepresentable & CaseIterable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Character {
         return ClosedPathFormat(parser %> path(.char).map(.rawRepresentable))
     }
 }
 
-extension PartialIso where A == String, B: LosslessStringConvertible {
-    public static func lossless(_ type: B.Type) -> PartialIso {
+extension URLPartialIso where A == String, B: LosslessStringConvertible & CustomParserTemplateValueConvertible {
+    public static func lossless(_ type: B.Type) -> URLPartialIso {
         return losslessStringConvertible
     }
 }
 
-extension PartialIso where B: RawRepresentable, B.RawValue == A {
-    public static func raw(_ type: B.Type) -> PartialIso {
-        return rawRepresentable
+extension URLPartialIso where B: RawRepresentable & CaseIterable, B.RawValue == A {
+    public static func raw(_ type: B.Type) -> URLPartialIso<A, B> {
+        rawRepresentable
     }
 }
 
@@ -284,7 +284,8 @@ public extension URLFormat {
         return .init(self.parser <% Parser<URLRequestComponents, Prelude.Unit>(
             parse: { $0.isEmpty ? ($0, unit) : nil },
             print: const(URLRequestComponents()),
-            template: const(URLRequestComponents())
+            template: const(URLRequestComponents()),
+            templateValue: { unit }
         ))
     }
 }
@@ -293,7 +294,8 @@ public func any() -> Parser<URLRequestComponents, Prelude.Unit> {
     return Parser(
         parse: { ($0, unit) },
         print: const(URLRequestComponents()),
-        template: const(URLRequestComponents())
+        template: const(URLRequestComponents()),
+        templateValue: { unit }
     )
 }
 
@@ -303,9 +305,11 @@ public func some() -> Parser<URLRequestComponents, String> {
             format.isEmpty
                 ? (format, "")
                 : (format.with { $0.pathComponents = [] }, format.pathComponents.joined(separator: "/"))
-    },
+        },
         print: { str in URLRequestComponents().with { $0.urlComponents.path = str } },
-        template: { _ in URLRequestComponents(urlComponents: URLComponents(string: "*")!) })
+        template: { _ in URLRequestComponents(urlComponents: URLComponents(string: "*")!) },
+        templateValue: { "" }
+    )
 }
 
 public func httpMethod(_ method: String) -> Parser<URLRequestComponents, Prelude.Unit> {
@@ -315,7 +319,8 @@ public func httpMethod(_ method: String) -> Parser<URLRequestComponents, Prelude
             return (request, unit)
         },
         print: const(URLRequestComponents(method: method)),
-        template: const(URLRequestComponents(method: method))
+        template: const(URLRequestComponents(method: method)),
+        templateValue: { unit }
     )
 }
 
@@ -327,50 +332,55 @@ public func path(_ str: String) -> Parser<URLRequestComponents, Prelude.Unit> {
                     ? (format.with { $0.pathComponents = ps }, unit)
                     : nil
             }
-    },
+        },
         print: { _ in URLRequestComponents().with { $0.urlComponents.path = str } },
-        template: { _ in URLRequestComponents().with { $0.urlComponents.path = str } }
+        template: { _ in URLRequestComponents().with { $0.urlComponents.path = str } },
+        templateValue: { unit }
     )
 }
 
-public func path<A>(_ f: PartialIso<String, A>) -> Parser<URLRequestComponents, A> {
+public func path<A>(_ f: URLPartialIso<String, A>) -> Parser<URLRequestComponents, A> {
     return Parser<URLRequestComponents, A>(
         parse: { format in
-            guard let (p, ps) = head(format.pathComponents), let v = try f.apply(p) else { return nil }
+            guard let (p, ps) = head(format.pathComponents), let v = try f.iso.apply(p) else { return nil }
             return (format.with { $0.pathComponents = ps }, v)
-    },
+        },
         print: { a in
-            try f.unapply(a).flatMap { s in
+            try f.iso.unapply(a).flatMap { s in
                 URLRequestComponents().with { $0.urlComponents.path = s }
             }
-    },
+        },
         template: { a in
-            try f.unapply(a).flatMap { s in
+            try f.iso.unapply(a).flatMap { s in
                 return URLRequestComponents().with { $0.urlComponents.path = ":" + "\(type(of: a))" }
             }
-    })
+        },
+        templateValue: { f.templateValue }
+    )
 }
 
-public func query<A>(_ key: String, _ f: PartialIso<String, A>) -> Parser<URLRequestComponents, A> {
+public func query<A>(_ key: String, _ f: URLPartialIso<String, A>) -> Parser<URLRequestComponents, A> {
     return Parser<URLRequestComponents, A>(
         parse: { format in
             guard
                 let queryItems = format.urlComponents.queryItems,
                 let p = queryItems.first(where: { $0.name == key })?.value,
-                let v = try f.apply(p)
+                let v = try f.iso.apply(p)
                 else { return nil }
             return (format, v)
-    },
+        },
         print: { a in
-            try f.unapply(a).flatMap { s in
+            try f.iso.unapply(a).flatMap { s in
                 URLRequestComponents().with { $0.urlComponents.queryItems = [URLQueryItem(name: key, value: s)] }
             }
-    },
+        },
         template: { a in
-            try f.unapply(a).flatMap { s in
+            try f.iso.unapply(a).flatMap { s in
                 URLRequestComponents().with { $0.urlComponents.queryItems = [URLQueryItem(name: key, value: ":" + "\(type(of: a))")] }
             }
-    })
+        },
+        templateValue: { f.templateValue }
+    )
 }
 
 private func head<A>(_ xs: [A]) -> (A, [A])? {
@@ -443,3 +453,88 @@ public func flatten<A, B, C, D, E, F, G, H, I, J>(_ f: (((((((((A, B), C), D), E
 public func parenthesize<A, B, C, D, E, F, G, H, I, J>(_ a: A, _ b: B, _ c: C, _ d: D, _ e: E, _ f: F, _ g: G, _ h: H, _ i: I, _ j: J) -> (((((((((A, B), C), D), E), F), G), H), I), J) {
     return (((((((((a, b), c), d), e), f), g), h), i), j)
 }
+
+public struct URLPartialIso<A, B> {
+    let iso: PartialIso<A, B>
+    let templateValue: B
+    
+    public init(iso: PartialIso<A, B>, templateValue: B) {
+        self.iso = iso
+        self.templateValue = templateValue
+    }
+    
+    public static func >>> <C> (lhs: URLPartialIso<A, B>, rhs: URLPartialIso<B, C>) -> URLPartialIso<A, C> {
+        URLPartialIso<A, C>(iso: lhs.iso >>> rhs.iso, templateValue: rhs.templateValue)
+    }
+}
+
+extension URLPartialIso where B: CustomParserTemplateValueConvertible {
+    public init(iso: PartialIso<A, B>) {
+        self.iso = iso
+        self.templateValue = B.parserTemplateValue
+    }
+}
+
+extension URLPartialIso where A == String, B == Any {
+    public static var any: URLPartialIso {
+        return .init(iso: .any, templateValue: "")
+    }
+}
+
+extension URLPartialIso where A == String, B == Int {
+    /// An isomorphism between strings and integers.
+    public static var int: URLPartialIso {
+        return .init(iso: .int, templateValue: 0)
+    }
+}
+
+extension URLPartialIso where A == String, B == Bool {
+    /// An isomorphism between strings and booleans.
+    public static var bool: URLPartialIso {
+        return .init(iso: .bool, templateValue: true)
+    }
+}
+
+extension URLPartialIso where A == String, B == String {
+    /// The identity isomorphism between strings.
+    public static var string: URLPartialIso {
+        return .init(iso: .id, templateValue: "")
+    }
+}
+
+extension URLPartialIso where A == String, B == Character {
+    /// The identity isomorphism between strings.
+    public static var char: URLPartialIso {
+        return .init(iso: .char, templateValue: Character(" "))
+    }
+}
+
+extension URLPartialIso where A == String, B == Double {
+    /// An isomorphism between strings and doubles.
+    public static var double: URLPartialIso {
+        return .init(iso: .double, templateValue: 0.0)
+    }
+}
+
+extension URLPartialIso where A == String, B: LosslessStringConvertible & CustomParserTemplateValueConvertible {
+    public static var losslessStringConvertible: URLPartialIso {
+        return .init(iso: .losslessStringConvertible)
+    }
+}
+
+extension URLPartialIso where B: RawRepresentable & CaseIterable, B.RawValue == A {
+    public static var rawRepresentable: URLPartialIso {
+        precondition(B.allCases.first != nil)
+        return .init(iso: .rawRepresentable, templateValue: B.allCases.first!)
+    }
+}
+
+extension URLPartialIso where A == String, B == UUID {
+    public static var uuid: URLPartialIso<String, UUID> {
+        return .init(iso: PartialIso(
+            apply: UUID.init(uuidString:),
+            unapply: { $0.uuidString }
+        ), templateValue: UUID())
+    }
+}
+
