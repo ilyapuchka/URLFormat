@@ -127,6 +127,21 @@ public class OpenQueryFormat<A>: URLFormat<A> {
             return ClosedQueryFormat(parser %> query(member, iso))
         }
     }
+    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Int, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Int {
+        return { [parser] iso in
+            return ClosedQueryFormat(parser <%> query(member, .int >>> .raw(B.self)))
+        }
+    }
+    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Double, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Double {
+        return { [parser] iso in
+            return ClosedQueryFormat(parser <%> query(member, .double >>> .raw(B.self)))
+        }
+    }
+    public subscript<B: RawRepresentable>(dynamicMember member: String) -> (PartialIso<Character, B>) -> ClosedQueryFormat<(A, B)> where B.RawValue == Character {
+        return { [parser] iso in
+            return ClosedQueryFormat(parser <%> query(member, .char >>> .raw(B.self)))
+        }
+    }
     public override func parse(_ url: URLRequestComponents) throws -> A? {
         try parser.parse(url)?.match
     }
@@ -199,7 +214,7 @@ extension OpenPathFormat {
         return ClosedPathFormat(parser <%> path(.losslessStringConvertible))
     }
     public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == String {
-        return ClosedPathFormat(parser <%> path(.rawRepresentable))
+        return ClosedPathFormat(parser <%> path(.string).map(.rawRepresentable))
     }
     public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<(A, B)> where B.RawValue == Int {
         return ClosedPathFormat(parser <%> path(.int).map(.rawRepresentable))
@@ -238,7 +253,7 @@ extension OpenPathFormat where A == Prelude.Unit {
         return ClosedPathFormat(parser %> path(.losslessStringConvertible))
     }
     public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == String {
-        return ClosedPathFormat(parser %> path(.rawRepresentable))
+        return ClosedPathFormat(parser %> path(.string).map(.rawRepresentable))
     }
     public func raw<B: RawRepresentable>(_ type: B.Type) -> ClosedPathFormat<B> where B.RawValue == Int {
         return ClosedPathFormat(parser %> path(.int).map(.rawRepresentable))
