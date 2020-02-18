@@ -128,8 +128,8 @@ You can add support for your own types by implementing `PartialIso<String, MyTyp
 ```swift
 import CommonParsers
 
-extension PartialIso where A == String, B == MyType {
-    static var myType: PartialIso { ... }
+extension URLPartialIso where A == String, B == MyType {
+    static var myType: URLPartialIso { ... }
 }
 extension OpenPathFormat where A == Prelude.Unit {
     var myType: ClosedPathFormat<MyType> {
