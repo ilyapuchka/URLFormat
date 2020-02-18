@@ -69,7 +69,7 @@ public struct URLRequestComponents: Monoid, CustomStringConvertible {
 }
 
 public class URLFormat<A> {
-    let parser: Parser<URLRequestComponents, A>
+    public let parser: Parser<URLRequestComponents, A>
 
     required init(_ parser: Parser<URLRequestComponents, A>) {
         self.parser = parser
