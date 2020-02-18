@@ -71,7 +71,7 @@ public struct URLRequestComponents: Monoid, CustomStringConvertible {
 public class URLFormat<A> {
     let parser: Parser<URLRequestComponents, A>
 
-    init(_ parser: Parser<URLRequestComponents, A>) {
+    required init(_ parser: Parser<URLRequestComponents, A>) {
         self.parser = parser
     }
     
@@ -102,7 +102,7 @@ public class OpenPathFormat<A>: URLFormat<A> {
 // url does not have a query and is complete, not expeciting any path parameters
 // only query parameters can be added
 public class ClosedPathFormat<A>: URLFormat<A>, ExpressibleByStringLiteral {
-    public override init(_ parser: Parser<URLRequestComponents, A>) {
+    public required init(_ parser: Parser<URLRequestComponents, A>) {
         super.init(parser)
     }
     required public convenience init(stringLiteral value: String) {
@@ -281,7 +281,7 @@ extension URLPartialIso where B: RawRepresentable & CaseIterable, B.RawValue == 
 public extension URLFormat {
     /// Matches url that has no additional path componets that were not parsed yet.
     var end: URLFormat {
-        return .init(self.parser <% Parser<URLRequestComponents, Prelude.Unit>(
+        return Self(self.parser <% Parser<URLRequestComponents, Prelude.Unit>(
             parse: { $0.isEmpty ? ($0, unit) : nil },
             print: const(URLRequestComponents()),
             template: const(URLRequestComponents()),
