@@ -17,7 +17,9 @@ try format.template(parameters) // "users/:String/repos?filter=:String&page=:Int
 
 This library is based on [CommonParsers](https://github.com/ilyapuchka/common-parsers) which provides a common foundation for parser combinators and is heavily inspired by [swift-parser-printer](https://github.com/pointfreeco/swift-parser-printer) from [pointfreeco](https://twitter.com/pointfreeco). If you want to learn more about [parser combinators](https://www.pointfree.co/episodes/ep62-parser-combinators-part-1) and application of functional concepts in every day iOS development check out their [blog](https://www.pointfree.co).
 
-URLFormat is used in [SwiftNIOMock](https://github.com/ilyapuchka/SwiftNIOMock) to implement URL router. Vapor extension will be published in the future (most likely as a separate repository).
+URLFormat is used in [SwiftNIOMock](https://github.com/ilyapuchka/SwiftNIOMock) to implement URL router.
+
+To use URLFormat with Vapor use a dedicated "vapor" branch ([Read more](#Vapor)) 
 
 Also checkout [Interplate](https://github.com/ilyapuchka/Interplate) which provides a foundation for string templates using parser combinators and string interpolation together.
 
@@ -155,6 +157,28 @@ With that you can use your type as a path or a query parameter:
 `*` - allows any trailing path components
 `*?` - concatenates path with any trailing path components and a query component
 
+## Vapor
+
+To use URLFormat with Vapor you need to install it from the "vapor" branch . Then you can use `import VaporURLFormat` instead of `import URLFormat` and register routes using `router` method instead of `get`, `post`, `put` etc.:
+
+```swift
+router.route(GET/.hello/.string) { (request, string) in
+    print(string) // "vapor"
+    ...
+}
+try app.client(.GET, "/hello/vapor")
+```
+
+With Swift 5.2 you can use router as a function directly (using Swift static callable feature):
+
+```swift
+router(GET/.hello/.string) { (request, string) in
+    print(string) // "vapor"
+    ...
+}
+try app.client(.GET, "/hello/vapor")
+``` 
+
 ## Installation
 
 ```swift
@@ -163,6 +187,18 @@ import PackageDescription
 let package = Package(
     dependencies: [
         .package(url: "https://github.com/ilyapuchka/URLFormat.git", .branch("master")),
+    ]
+)
+```
+
+For using URLFormat with Vapor:
+
+```swift
+import PackageDescription
+
+let package = Package(
+    dependencies: [
+        .package(url: "https://github.com/ilyapuchka/URLFormat.git", .branch("vapor")),
     ]
 )
 ```
