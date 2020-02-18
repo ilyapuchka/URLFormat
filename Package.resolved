@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "CommonParsers",
+        "repositoryURL": "https://github.com/ilyapuchka/common-parsers.git",
+        "state": {
+          "branch": "master",
+          "revision": "fb6f45cc44c4bd3b1385bf57e67755944e405ede",
+          "version": null
+        }
+      },
+      {
         "package": "Prelude",
         "repositoryURL": "https://github.com/pointfreeco/swift-prelude.git",
         "state": {
