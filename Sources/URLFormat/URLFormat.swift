@@ -290,15 +290,6 @@ public extension URLFormat {
     }
 }
 
-public func any() -> Parser<URLRequestComponents, Prelude.Unit> {
-    return Parser(
-        parse: { ($0, unit) },
-        print: const(URLRequestComponents()),
-        template: const(URLRequestComponents()),
-        templateValue: { unit }
-    )
-}
-
 public func some() -> Parser<URLRequestComponents, String> {
     return Parser(
         parse: { format in
