@@ -125,6 +125,12 @@ Following parameters types are supported:
 - `LosslessStringConvertible` types with `lossless(MyType.self)` operator
 - `RawRepresentable` with `String`, `Character`, `Int` and `Double` raw value types with `raw(MyType.self)` operator
 
+In rare cases where your URL path components collide with these operators names you can use a `.const` operator to define path component as a string literal and not a typed parameter:
+
+```swift
+/.users/.const("uuid")/.uuid
+```
+
 You can add support for your own types by implementing `PartialIso<String, MyType>`:
 
 ```swift

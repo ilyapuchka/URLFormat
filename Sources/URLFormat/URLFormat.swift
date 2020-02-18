@@ -189,6 +189,9 @@ public postfix func * (_ lhs: ClosedPathFormat<Prelude.Unit>) -> URLFormat<Strin
 }
 
 extension OpenPathFormat {
+    public func const(_ value: String) -> ClosedPathFormat<A> {
+        return ClosedPathFormat(parser <% path(value))
+    }
     public var string: ClosedPathFormat<(A, String)> {
         return ClosedPathFormat(parser <%> path(.string))
     }
@@ -228,6 +231,9 @@ extension OpenPathFormat {
 }
 
 extension OpenPathFormat where A == Prelude.Unit {
+    public func const(_ value: String) -> ClosedPathFormat<Prelude.Unit> {
+        return ClosedPathFormat(parser <% path(value))
+    }
     public var string: ClosedPathFormat<String> {
         return ClosedPathFormat(parser %> path(.string))
     }
