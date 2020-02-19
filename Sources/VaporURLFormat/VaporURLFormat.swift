@@ -94,7 +94,7 @@ extension Router {
     }
     #endif
     
-    func register<T, U>(_ format: URLFormat<U>, use closure: @escaping (Request, U) throws -> T) -> Route<Responder> where T: ResponseEncodable {
+    public func register<T, U>(_ format: URLFormat<U>, use closure: @escaping (Request, U) throws -> T) -> Route<Responder> where T: ResponseEncodable {
         let responder = BasicResponder { request in
             guard let urlComponents = URLComponents(string: request.http.urlString) else {
                 throw RoutingError.init(identifier: "", reason: "")
