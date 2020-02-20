@@ -27,9 +27,9 @@ Also checkout [Interplate](https://github.com/ilyapuchka/Interplate) which provi
 
 URLFormat is a URL builder that allows you to describe URL in a natural manner and allows you to pattern match it in a type safe way.
 
-Conventional way of represting URL patterns, i.e. for web server API routes, is using some kind of string placehoders for paramters, i.e. `/user/:name`. This then is being parsed and path and query paramters are aggregated into collection. The issues is that this approach is error-prone (what if `:` is missed) and access to the parameters is not type safe - it's possible to access parameters as a wrong type or convertion must be implemented by the client, and it's possible to access parameter by wrong key or index.
+The conventional way of representing URL patterns, i.e. for web server API routes, is using some kind of string placeholder for parameters, i.e. `/user/:name`. This is then parsed, and path and query parameters are aggregated into a collection. The issue is that this approach is error-prone (what if `:` is missed) and access to the parameters is not type safe - it's possible to access parameters as a wrong type or conversion must be implemented by the client, and it's possible to access parameter by the wrong key or index.
 
-Another approach that Swift allows is to use enums pattern matching, like described in [this post](https://alisoftware.github.io/swift/pattern-matching/2015/08/23/urls-and-pattern-matching/) and implemented in [URLPatterns](https://github.com/johnpatrickmorgan/URLPatterns). While this approach allows type-safe access to parameters it's not very ergonomic and nice to read:
+Another approach that Swift allows is to use enums pattern matching, as described in [this post](https://alisoftware.github.io/swift/pattern-matching/2015/08/23/urls-and-pattern-matching/) and implemented in [URLPatterns](https://github.com/johnpatrickmorgan/URLPatterns). While this approach allows type-safe access to parameters it's not very ergonomic and nice to read:
 
 ```swift
 if case .n4("user", let userId, "profile", _) ~= url.countedPathElements() { ... }
@@ -65,9 +65,9 @@ router.get("users", ":name") { request in
 }
 ```
 
-This is nicer to write and read, but it's even less type safe - the parameters must be fetched in the order they appear in the path and their types should match but compiler won't ensure that and you would need to make sure that the pattern definition and parameters access are always in sync.
+This is nicer to write and read, but it's even less type safe - the parameters must be fetched in the order they appear in the path and their types should match but the compiler won't ensure that and you would need to make sure that the pattern definition and parameter access are always in sync.
 
-You can't as well describe query parameters in the route, they instead are accessed in the route handler either via `request.data["key"]?.string` or `request.query?["key"]?.stirng` which is not type safe as well.
+You also can't describe query parameters in the route, they are instead accessed in the route handler either via `request.data["key"]?.string` or `request.query?["key"]?.stirng` which is also not type safe.
 
 With URLFormat you would describe URLs as follows:
 
@@ -79,11 +79,11 @@ let parameters = urlFormat.parse(request)
 print(flatten(parameters)) // ("apple", "swift", 2)
 ```
 
-This patter will match URL with path like `/users/apple/repos/?filter=swift&page=1` (first and last `/` are optional). The fully qualified type of `urlFormat` in this case would be  `ClosedQueryFormat<((String, String), Int)>` (most of the time using base class type `URLFormat` is sufficient). The type of generic parameter describes types of all captured parameters. To extract them from the actual URL you'd use `parse` method and one of `flatten` functions to "flatten" nested tuples, i.e. `((A, B), C) -> (A, B, C)` which makes it more convenient to access parameters.
+This pattern will match URL with path like `/users/apple/repos/?filter=swift&page=1` (first and last `/` are optional). The fully qualified type of `urlFormat` in this case would be  `ClosedQueryFormat<((String, String), Int)>` (most of the time using base class type `URLFormat` is sufficient). The type of generic parameter describes the types of all captured parameters. To extract them from the actual URL you'd use `parse` method and one of `flatten` functions to "flatten" nested tuples, i.e. `((A, B), C) -> (A, B, C)` which makes it more convenient to access parameters.
 
-Note that it's not necessary to specify a generic type parameter manually as compiler can infer it from the declaration<sup id="a1">[1](#f1)</sup>. And compiler ensures that pattern and types of captured parameters are always in sync.
+Note that it's not necessary to specify a generic type parameter manually as the compiler can infer it from the declaration<sup id="a1">[1](#f1)</sup>. And the compiler ensures that pattern and types of captured parameters are always in sync.
 
-A nice caveat is that `URLFormat` can be used to print actual URLs and their readable templates if you provide it values for its parameters (again compiler makes sure that they are always in sync):
+A nice caveat is that `URLFormat` can be used to print actual URLs and their readable templates if you provide it values for its parameters (again the compiler makes sure that they are always in sync):
 
 ```swift
 let parameters = parenthesize("apple", "swift", 2)
@@ -91,7 +91,7 @@ urlFormat.print(parameters) // "users/apple/repos?filter=swift&page=2"
 urlFormat.template(parameters) // "users/:String/repos?filter=:String&page=:Int"
 ```
 
-Note that there are no string literals involved in declaring this URL except the first one. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so expression like `.users` is converted to the parser that parses `"users"` string from the path components.
+Note that there are no string literals involved in declaring this URL except the first one. This is because under the hood `URLFormat` implements `@dynamicMemberLookup`, so an expression like `.users` is converted to the parser that parses `"users"` string from the path components.
 
 You can either leave the first string component empty<sup id="a2">[2](#f2)</sup> or use it to specify the HTTP method of the request if you use URLFormat with HTTP requests and not just URLs:
 
@@ -125,7 +125,7 @@ Following parameters types are supported:
 - `LosslessStringConvertible` types with `lossless(MyType.self)` operator
 - `RawRepresentable` with `String`, `Character`, `Int` and `Double` raw value types with `raw(MyType.self)` operator
 
-In rare cases where your URL path components collide with these operators names you can use a `.const` operator to define path component as a string literal and not a typed parameter:
+In rare cases where your URL path components collide with these operator names you can use a `.const` operator to define path component as a string literal and not a typed parameter:
 
 ```swift
 /.users/.const("uuid")/.uuid
